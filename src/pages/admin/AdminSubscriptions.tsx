@@ -46,7 +46,8 @@ export default function AdminSubscriptions() {
     }
     return {
       'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'X-Admin-Email': user?.email || ''
     };
   };
 

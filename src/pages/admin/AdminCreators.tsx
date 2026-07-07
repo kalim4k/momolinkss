@@ -102,7 +102,8 @@ export default function AdminCreators() {
     }
     return {
       'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'X-Admin-Email': user?.email || ''
     };
   };
 

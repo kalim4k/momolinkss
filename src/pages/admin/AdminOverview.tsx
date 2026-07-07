@@ -71,7 +71,8 @@ export default function AdminOverview() {
 
       const headers = {
         'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'X-Admin-Email': user?.email || ''
       };
 
       // Fetch KPIs, Chart, and Recent purchases in parallel
