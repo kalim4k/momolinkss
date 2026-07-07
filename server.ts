@@ -13,15 +13,23 @@ import { serverDb } from './src/lib/serverDb';
 
 dotenv.config();
 
+// Ensure both VITE_ prefixed and standard environment variables are mapped on process.env
+process.env.SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+process.env.SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+process.env.SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE;
+process.env.MAKETOU_API_KEY = process.env.MAKETOU_API_KEY || process.env.VITE_MAKETOU_API_KEY;
+process.env.MAKETOU_PRODUCT_ID = process.env.MAKETOU_PRODUCT_ID || process.env.VITE_MAKETOU_PRODUCT_ID;
+process.env.ADMIN_EMAIL = process.env.ADMIN_EMAIL || process.env.VITE_ADMIN_EMAIL || 'bigardlamine@gmail.com';
+
 const app = express();
 const PORT = 3000;
 
 app.use(express.json());
 
 // Initialize Supabase Client
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE;
 
 const isSupabaseConfigured = 
   supabaseUrl && 
