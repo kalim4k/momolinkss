@@ -1401,45 +1401,39 @@ app.get('/api/portal/creator-purchases', async (req, res) => {
 const adminMiddleware = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
   const authHeader = req.headers.authorization;
   const adminEmail = process.env.ADMIN_EMAIL || 'bigardlamine@gmail.com';
-  const xAdminEmail = req.headers['x-admin-email'];
-  
-  if (xAdminEmail === adminEmail) {
+
+  // For pure demo/mock mode without Supabase
+  if (!supabase) {
     return next();
   }
-  
-  if (!authHeader) {
-    return res.status(401).json({ error: 'Non autorisé' });
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Non autorisé : En-tête Authorization manquant ou invalide.' });
   }
-  
-  const token = authHeader.replace('Bearer ', '');
-  
-  // Demo mode or check token directly if it matches admin email
-  if (token === adminEmail) {
+
+  const token = authHeader.slice(7);
+
+  // If local/preview development without active token (e.g. mock login bypass in dev mode only)
+  if (token === adminEmail && process.env.NODE_ENV !== 'production') {
     return next();
   }
-  
-  if (supabase) {
-    try {
-      const { data: { user }, error } = await supabase.auth.getUser(token);
-      if (error || !user) {
-        if (xAdminEmail === adminEmail) {
-          return next();
-        }
-        return res.status(401).json({ error: 'Non autorisé' });
-      }
-      if (user.email === adminEmail) {
-        return next();
-      }
-      return res.status(403).json({ error: 'Interdit' });
-    } catch (err) {
-      if (xAdminEmail === adminEmail) {
-        return next();
-      }
-      return res.status(401).json({ error: 'Non autorisé' });
+
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    if (error || !user) {
+      console.error('[Admin Auth] Supabase getUser error:', error);
+      return res.status(401).json({ error: 'Non autorisé : Token invalide ou expiré.' });
     }
-  } else {
-    // If in pure demo/mock mode
+
+    if (user.email !== adminEmail) {
+      console.warn(`[Admin Auth] Access forbidden: logged in as ${user.email} but expected ${adminEmail}`);
+      return res.status(403).json({ error: 'Interdit : Vous n\'avez pas les droits d\'administration.' });
+    }
+
     return next();
+  } catch (err) {
+    console.error('[Admin Auth] Exception verifying token:', err);
+    return res.status(500).json({ error: 'Erreur interne lors de la validation des droits admin.' });
   }
 };
 
