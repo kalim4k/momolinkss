@@ -6,7 +6,9 @@
 import fs from 'fs';
 import path from 'path';
 
-const DB_FILE_PATH = path.join(process.cwd(), 'src', 'data', 'server_db.json');
+const DB_FILE_PATH = process.env.VERCEL || process.env.NODE_ENV === 'production'
+  ? '/tmp/server_db.json'
+  : path.join(process.cwd(), 'src', 'data', 'server_db.json');
 
 // Ensure data directory exists
 const dir = path.dirname(DB_FILE_PATH);
