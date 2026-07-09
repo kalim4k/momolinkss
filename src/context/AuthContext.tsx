@@ -79,14 +79,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           unsubscribe = () => subscription.unsubscribe();
         } else {
           // Demo Mode - Load from localStorage
-          const cachedUser = localStorage.getItem('momo_creator_user');
-          const cachedProfile = localStorage.getItem('momo_creator_profile');
+          const cachedUserStr = localStorage.getItem('momo_creator_user');
+          if (cachedUserStr) {
+            const parsedUser = JSON.parse(cachedUserStr);
+            setUser(parsedUser);
 
-          if (cachedUser) {
-            setUser(JSON.parse(cachedUser));
-          }
-          if (cachedProfile) {
-            setProfile(JSON.parse(cachedProfile));
+            const cachedProfileStr = localStorage.getItem('momo_creator_profile');
+            if (cachedProfileStr) {
+              setProfile(JSON.parse(cachedProfileStr));
+            } else {
+              // Try to restore profile from local profiles database
+              const profilesDbStr = localStorage.getItem('momo_creator_profiles_db');
+              const profilesDb = profilesDbStr ? JSON.parse(profilesDbStr) : [];
+              const foundProfile = profilesDb.find((p: any) => p.user_id === parsedUser.id);
+              if (foundProfile) {
+                localStorage.setItem('momo_creator_profile', JSON.stringify(foundProfile));
+                setProfile(foundProfile);
+              }
+            }
           }
         }
       } catch (err: any) {
@@ -117,10 +127,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: true };
       } else {
         // Mock Sign Up
-        const mockUser = { id: `usr_${Math.random().toString(36).substr(2, 9)}`, email };
-        localStorage.setItem('momo_creator_user', JSON.stringify(mockUser));
-        localStorage.removeItem('momo_creator_profile'); // Clear any old profile
-        setUser(mockUser);
+        const usersDbStr = localStorage.getItem('momo_creator_users_db');
+        const usersDb = usersDbStr ? JSON.parse(usersDbStr) : [];
+
+        // Check if user already exists
+        const existingUser = usersDb.find((u: any) => u.email.toLowerCase() === email.toLowerCase());
+        if (existingUser) {
+          throw new Error('Un utilisateur avec cette adresse email existe déjà.');
+        }
+
+        const mockUser = { id: `usr_${Math.random().toString(36).substr(2, 9)}`, email, password };
+        usersDb.push(mockUser);
+        localStorage.setItem('momo_creator_users_db', JSON.stringify(usersDb));
+
+        // Set active session
+        const sessionUser = { id: mockUser.id, email: mockUser.email };
+        localStorage.setItem('momo_creator_user', JSON.stringify(sessionUser));
+        localStorage.removeItem('momo_creator_profile'); // Clear any old active session profile
+        
+        setUser(sessionUser);
         setProfile(null);
         return { success: true };
       }
@@ -161,25 +186,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       } else {
         // Mock Sign In
-        const cachedUser = localStorage.getItem('momo_creator_user');
-        const mockUser = cachedUser ? JSON.parse(cachedUser) : null;
+        const usersDbStr = localStorage.getItem('momo_creator_users_db');
+        const usersDb = usersDbStr ? JSON.parse(usersDbStr) : [];
 
-        // If no user exists, let them log in with a newly generated one
-        const activeUser = mockUser && mockUser.email === email 
-          ? mockUser 
-          : { id: `usr_${Math.random().toString(36).substr(2, 9)}`, email };
+        // Try to find user in our mock database
+        let activeUser = usersDb.find((u: any) => u.email.toLowerCase() === email.toLowerCase());
 
-        localStorage.setItem('momo_creator_user', JSON.stringify(activeUser));
-        setUser(activeUser);
+        if (activeUser) {
+          // Verify password
+          if (activeUser.password && activeUser.password !== password) {
+            throw new Error('Adresse email ou mot de passe incorrect.');
+          }
+        } else {
+          // Create the user so they are saved
+          activeUser = { id: `usr_${Math.random().toString(36).substr(2, 9)}`, email, password };
+          usersDb.push(activeUser);
+          localStorage.setItem('momo_creator_users_db', JSON.stringify(usersDb));
+        }
 
-        // Fetch corresponding profile from localStorage
-        const cachedProfileStr = localStorage.getItem('momo_creator_profile');
-        const cachedProfile = cachedProfileStr ? JSON.parse(cachedProfileStr) : null;
+        const sessionUser = { id: activeUser.id, email: activeUser.email };
+        localStorage.setItem('momo_creator_user', JSON.stringify(sessionUser));
+        setUser(sessionUser);
 
-        if (cachedProfile && cachedProfile.user_id === activeUser.id) {
+        // Fetch corresponding profile from profiles database
+        const profilesDbStr = localStorage.getItem('momo_creator_profiles_db');
+        const profilesDb = profilesDbStr ? JSON.parse(profilesDbStr) : [];
+        const cachedProfile = profilesDb.find((p: any) => p.user_id === activeUser.id);
+
+        if (cachedProfile) {
+          // Set as active session profile
+          localStorage.setItem('momo_creator_profile', JSON.stringify(cachedProfile));
           setProfile(cachedProfile);
           return { success: true, hasProfile: true };
         } else {
+          localStorage.removeItem('momo_creator_profile');
           setProfile(null);
           return { success: true, hasProfile: false };
         }
@@ -225,13 +265,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (err) return true; // Graceful fallback
         return data === null;
       } else {
-        // Local check
-        const cachedProfileStr = localStorage.getItem('momo_creator_profile');
-        if (cachedProfileStr) {
-          const prof = JSON.parse(cachedProfileStr) as CreatorProfile;
-          return prof.username !== username.toLowerCase();
-        }
-        return true;
+        // Local check in database
+        const profilesDbStr = localStorage.getItem('momo_creator_profiles_db');
+        const profilesDb = profilesDbStr ? JSON.parse(profilesDbStr) : [];
+        const exists = profilesDb.some((p: any) => p.username === username.toLowerCase() && (!profile || p.id !== profile.id));
+        return !exists;
       }
     } catch {
       return true;
@@ -270,7 +308,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: true };
       } else {
         // Mock Profile Create
+        // Save to active session profile
         localStorage.setItem('momo_creator_profile', JSON.stringify(newProfile));
+
+        // Also save to profiles database
+        const profilesDbStr = localStorage.getItem('momo_creator_profiles_db');
+        const profilesDb = profilesDbStr ? JSON.parse(profilesDbStr) : [];
+
+        // Remove any existing profile for this user_id first
+        const filteredProfiles = profilesDb.filter((p: any) => p.user_id !== profileData.user_id);
+        filteredProfiles.push(newProfile);
+
+        localStorage.setItem('momo_creator_profiles_db', JSON.stringify(filteredProfiles));
         setProfile(newProfile);
         return { success: true };
       }
@@ -314,7 +363,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: true };
       } else {
         // Mock Profile Update
+        // Save to active session profile
         localStorage.setItem('momo_creator_profile', JSON.stringify(updatedProfile));
+
+        // Save to profiles database
+        const profilesDbStr = localStorage.getItem('momo_creator_profiles_db');
+        const profilesDb = profilesDbStr ? JSON.parse(profilesDbStr) : [];
+
+        const updatedDb = profilesDb.map((p: any) => p.id === profile.id ? updatedProfile : p);
+        localStorage.setItem('momo_creator_profiles_db', JSON.stringify(updatedDb));
+
         setProfile(updatedProfile);
         return { success: true };
       }

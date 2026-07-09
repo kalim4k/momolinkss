@@ -24,6 +24,7 @@ import {
   ArrowUpRight, 
   Clock, 
   AlertCircle,
+  Shield,
   MoreVertical,
   Archive,
   Trash2,
@@ -187,20 +188,11 @@ export default function Dashboard() {
 
   // Statistics State
   const [stats, setStats] = useState({
-    monthlyEarnings: 145000,
-    monthlySalesCount: 29,
-    totalEarnings: 385000,
-    publishedContentsCount: 3
+    monthlyEarnings: 0,
+    monthlySalesCount: 0,
+    totalEarnings: 0,
+    publishedContentsCount: 0
   });
-
-  // Latest Purchases State
-  const [latestPurchases] = useState([
-    { id: '1', title: 'Guide TikTok Business Pro', amount: 5000, time: 'il y a 2 heures' },
-    { id: '2', title: 'Formation Dropshipping Afrique', amount: 15000, time: 'il y a 5 heures' },
-    { id: '3', title: 'Pack de Presets Lightroom', amount: 3000, time: 'hier' },
-    { id: '4', title: 'Guide TikTok Business Pro', amount: 5000, time: 'il y a 2 jours' },
-    { id: '5', title: 'Ebook: Devenir Influenceur', amount: 4500, time: 'il y a 3 jours' }
-  ]);
 
   // ==========================================
   // STEP 5: STATE & HANDLERS FOR CONTENT TAB
@@ -287,6 +279,7 @@ export default function Dashboard() {
   // Withdrawals and Purchases State for withdrawals tab
   const [withdrawalsList, setWithdrawalsList] = useState<any[]>([]);
   const [purchasesList, setPurchasesList] = useState<any[]>([]);
+  const latestPurchases = purchasesList.slice(0, 5);
   const [isLoadingWithdrawals, setIsLoadingWithdrawals] = useState(false);
   const [withdrawalError, setWithdrawalError] = useState<string | null>(null);
   const [withdrawalSuccess, setWithdrawalSuccess] = useState<string | null>(null);
@@ -401,20 +394,28 @@ export default function Dashboard() {
         }
       } else {
         // Mock fallback using localStorage
-        let localPurchases = localStorage.getItem('momo_local_purchases');
-        if (!localPurchases) {
-          localStorage.setItem('momo_local_purchases', JSON.stringify(SEEDED_PURCHASES_MOCK));
-          localPurchases = JSON.stringify(SEEDED_PURCHASES_MOCK);
-        }
-        setPurchasesList(JSON.parse(localPurchases));
+        const isDefaultDemoCreator = profile.id === 'creator_1' || profile.id === 'creator_2' || profile.id === 'creator_3';
+        
+        if (!isDefaultDemoCreator) {
+          // Newly signed up/registered creators start with zero sales and zero withdrawals
+          setPurchasesList([]);
+          setWithdrawalsList([]);
+        } else {
+          let localPurchases = localStorage.getItem('momo_local_purchases');
+          if (!localPurchases) {
+            localStorage.setItem('momo_local_purchases', JSON.stringify(SEEDED_PURCHASES_MOCK));
+            localPurchases = JSON.stringify(SEEDED_PURCHASES_MOCK);
+          }
+          setPurchasesList(JSON.parse(localPurchases));
 
-        let localWithdrawals = localStorage.getItem('momo_local_withdrawals');
-        if (!localWithdrawals) {
-          const seededW = SEEDED_WITHDRAWALS_MOCK(profile.id);
-          localStorage.setItem('momo_local_withdrawals', JSON.stringify(seededW));
-          localWithdrawals = JSON.stringify(seededW);
+          let localWithdrawals = localStorage.getItem('momo_local_withdrawals');
+          if (!localWithdrawals) {
+            const seededW = SEEDED_WITHDRAWALS_MOCK(profile.id);
+            localStorage.setItem('momo_local_withdrawals', JSON.stringify(seededW));
+            localWithdrawals = JSON.stringify(seededW);
+          }
+          setWithdrawalsList(JSON.parse(localWithdrawals));
         }
-        setWithdrawalsList(JSON.parse(localWithdrawals));
       }
     } catch (err: any) {
       console.error('Error fetching withdrawals or purchases:', err);
@@ -665,59 +666,66 @@ export default function Dashboard() {
         }
       } else {
         // Mock fallback using localStorage
+        const isDefaultDemoCreator = profile.id === 'creator_1' || profile.id === 'creator_2' || profile.id === 'creator_3';
         const localContentsStr = localStorage.getItem('momo_local_contents');
         if (localContentsStr) {
           const contents = JSON.parse(localContentsStr) as Content[];
           // Filter out removed ones
           setContentsList(contents.filter(c => c.creator_id === profile.id && c.status !== 'removed'));
         } else {
-          // Default seed data
-          const defaultSeeded: Content[] = [
-            {
-              id: 'con_1',
-              creator_id: profile.id,
-              title: 'Pack PDF : Booster son audience TikTok en 30 jours',
-              description: "Ma méthode exacte, mes scripts prêts à l'emploi et mon calendrier éditorial pour passer de 0 à 10 000 abonnés rapidement.",
-              price_fcfa: 2500,
-              thumbnail_url: null,
-              preview_url: null,
-              file_url: 'https://example.com/secured/guide-tiktok.pdf',
-              content_type: 'pdf',
-              status: 'published',
-              is_published: true,
-              created_at: new Date(Date.now() - 3600000 * 24).toISOString()
-            },
-            {
-              id: 'con_2',
-              creator_id: profile.id,
-              title: 'Template Notion : Organiser ses tournages Reels & TikTok',
-              description: "Le template complet que j'utilise au quotidien pour planifier mes tournages, rédiger mes accroches et suivre mes métriques.",
-              price_fcfa: 1500,
-              thumbnail_url: null,
-              preview_url: null,
-              file_url: 'https://example.com/secured/notion-template.zip',
-              content_type: 'pdf',
-              status: 'published',
-              is_published: true,
-              created_at: new Date(Date.now() - 3600000 * 48).toISOString()
-            },
-            {
-              id: 'con_3',
-              creator_id: profile.id,
-              title: 'Masterclass : Décryptage de l\'Algorithme 2026 (Vidéo 20m)',
-              description: "Une vidéo exclusive de 20 minutes où je vous montre les coulisses de l'algorithme actuel, et comment maximiser le taux de rétention.",
-              price_fcfa: 5000,
-              thumbnail_url: null,
-              preview_url: null,
-              file_url: 'https://example.com/secured/masterclass-algo.mp4',
-              content_type: 'video',
-              status: 'draft',
-              is_published: false,
-              created_at: new Date(Date.now() - 3600000 * 72).toISOString()
-            }
-          ];
-          localStorage.setItem('momo_local_contents', JSON.stringify(defaultSeeded));
-          setContentsList(defaultSeeded);
+          if (!isDefaultDemoCreator) {
+            // New creator starts with zero contents
+            localStorage.setItem('momo_local_contents', JSON.stringify([]));
+            setContentsList([]);
+          } else {
+            // Default seed data
+            const defaultSeeded: Content[] = [
+              {
+                id: 'con_1',
+                creator_id: profile.id,
+                title: 'Pack PDF : Booster son audience TikTok en 30 jours',
+                description: "Ma méthode exacte, mes scripts prêts à l'emploi et mon calendrier éditorial pour passer de 0 à 10 000 abonnés rapidement.",
+                price_fcfa: 2500,
+                thumbnail_url: null,
+                preview_url: null,
+                file_url: 'https://example.com/secured/guide-tiktok.pdf',
+                content_type: 'pdf',
+                status: 'published',
+                is_published: true,
+                created_at: new Date(Date.now() - 3600000 * 24).toISOString()
+              },
+              {
+                id: 'con_2',
+                creator_id: profile.id,
+                title: 'Template Notion : Organiser ses tournages Reels & TikTok',
+                description: "Le template complet que j'utilise au quotidien pour planifier mes tournages, rédiger mes accroches et suivre mes métriques.",
+                price_fcfa: 1500,
+                thumbnail_url: null,
+                preview_url: null,
+                file_url: 'https://example.com/secured/notion-template.zip',
+                content_type: 'pdf',
+                status: 'published',
+                is_published: true,
+                created_at: new Date(Date.now() - 3600000 * 48).toISOString()
+              },
+              {
+                id: 'con_3',
+                creator_id: profile.id,
+                title: 'Masterclass : Décryptage de l\'Algorithme 2026 (Vidéo 20m)',
+                description: "Une vidéo exclusive de 20 minutes où je vous montre les coulisses de l'algorithme actuel, et comment maximiser le taux de rétention.",
+                price_fcfa: 5000,
+                thumbnail_url: null,
+                preview_url: null,
+                file_url: 'https://example.com/secured/masterclass-algo.mp4',
+                content_type: 'video',
+                status: 'draft',
+                is_published: false,
+                created_at: new Date(Date.now() - 3600000 * 72).toISOString()
+              }
+            ];
+            localStorage.setItem('momo_local_contents', JSON.stringify(defaultSeeded));
+            setContentsList(defaultSeeded);
+          }
         }
       }
     } catch (err: any) {
@@ -1123,12 +1131,16 @@ export default function Dashboard() {
     return !isSubscribed() || daysRemaining <= 5;
   };
 
+  const adminEmail = import.meta.env.VITE_ADMIN_EMAIL || 'bigardlamine@gmail.com';
+  const isAdmin = user?.email === adminEmail;
+
   const navItems = [
     { id: 'home', label: 'Tableau de bord', icon: Home, path: '/dashboard' },
     { id: 'content', label: 'Mon contenu', icon: Grid, path: '/dashboard/content' },
     { id: 'withdrawals', label: 'Retraits', icon: Wallet, path: '/dashboard/withdrawals' },
     { id: 'profile', label: 'Mon profil', icon: User, path: '/dashboard/profile' },
     { id: 'subscription', label: 'Abonnement', icon: Sparkles, path: '/dashboard/subscription' },
+    ...(isAdmin ? [{ id: 'admin', label: 'Administration', icon: Shield, path: '/admin' }] : []),
   ];
 
   const displayName = profile?.display_name || 'Créateur';
@@ -1480,7 +1492,7 @@ export default function Dashboard() {
                   </div>
                 ) : (
                   <div className={`divide-y ${themeStyles.border}`}>
-                    {(purchasesList.length > 0 ? purchasesList : SEEDED_PURCHASES_MOCK).map((purchase) => {
+                    {latestPurchases.map((purchase) => {
                       const amount = purchase.amount_paid_fcfa || purchase.amount || 0;
                       const title = purchase.contents?.title || purchase.title || 'Guide exclusif';
                       const timeString = purchase.created_at ? formatTimeAgo(purchase.created_at) : (purchase.time || 'récemment');
