@@ -185,9 +185,9 @@ export default function Onboarding() {
         <div className="bg-bg-surface border border-border-custom p-8 rounded-[24px] shadow-xl">
           
           {error && (
-            <div className="mb-6 p-4 rounded-[12px] bg-red-50 border border-red-200 text-red-700 text-xs flex items-start gap-2.5">
-              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-red-600" />
-              <p className="leading-relaxed font-medium">{error}</p>
+            <div className="mb-6 p-4 rounded-[12px] bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex items-start gap-2.5">
+              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+              <p className="leading-relaxed">{error}</p>
             </div>
           )}
 
@@ -244,16 +244,16 @@ export default function Onboarding() {
                     />
                     <div className="absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center">
                       {checkingUsername && <Loader2 className="animate-spin text-accent-corail h-4 w-4" />}
-                      {!checkingUsername && usernameAvailable === true && <CheckCircle2 className="text-emerald-600 h-4 w-4" />}
-                      {!checkingUsername && usernameAvailable === false && username.length >= 3 && <AlertCircle className="text-red-600 h-4 w-4" />}
+                      {!checkingUsername && usernameAvailable === true && <CheckCircle2 className="text-green-400 h-4 w-4" />}
+                      {!checkingUsername && usernameAvailable === false && username.length >= 3 && <AlertCircle className="text-red-400 h-4 w-4" />}
                     </div>
                   </div>
                   
                   {usernameAvailable === false && username.length >= 3 && (
-                    <span className="text-[10px] text-red-600 font-medium">Ce nom d'utilisateur est déjà pris ou contient des caractères non autorisés (minuscules, chiffres et tiret bas uniquement).</span>
+                    <span className="text-[10px] text-red-400">Ce nom d'utilisateur est déjà pris ou contient des caractères non autorisés (minuscules, chiffres et tiret bas uniquement).</span>
                   )}
                   {usernameAvailable === true && (
-                    <span className="text-[10px] text-emerald-600 font-semibold flex items-center gap-1">
+                    <span className="text-[10px] text-green-400 flex items-center gap-1">
                       <Check size={10} /> Nom d'utilisateur disponible !
                     </span>
                   )}

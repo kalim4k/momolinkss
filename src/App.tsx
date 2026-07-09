@@ -25,16 +25,13 @@ import {
   Instagram,
   X,
   CreditCard,
-  QrCode,
-  Zap,
-  Download
+  QrCode
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import LockedContentCard from './components/LockedContentCard';
-import PlatformImpact from './components/PlatformImpact';
 import { Content } from './types';
 import Login from './pages/auth/Login';
 import Signup from './pages/auth/Signup';
@@ -46,37 +43,8 @@ import SubscriptionConfirm from './pages/SubscriptionConfirm';
 import ContentView from './pages/ContentView';
 import BuyerPortal from './pages/BuyerPortal';
 import BuyerPurchases from './pages/BuyerPurchases';
-import AdminLayout from './pages/admin/AdminLayout';
-import AdminOverview from './pages/admin/AdminOverview';
-import AdminCreators from './pages/admin/AdminCreators';
-import AdminWithdrawals from './pages/admin/AdminWithdrawals';
-import AdminSubscriptions from './pages/admin/AdminSubscriptions';
-import AdminTransactions from './pages/admin/AdminTransactions';
-import Terms from './pages/Terms';
-import Privacy from './pages/Privacy';
-import Cgv from './pages/Cgv';
 
 // Route Guards
-function AdminRoute({ children }: { children: ReactNode }) {
-  const { user, loading } = useAuth();
-  
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#14120F] flex items-center justify-center">
-        <div className="w-10 h-10 rounded-full border-4 border-accent-corail border-t-transparent animate-spin" />
-      </div>
-    );
-  }
-  
-  const adminEmail = import.meta.env.VITE_ADMIN_EMAIL || 'bigardlamine@gmail.com';
-  
-  if (!user || user.email !== adminEmail) {
-    return <Navigate to="/auth/login" replace />;
-  }
-  
-  return <>{children}</>;
-}
-
 function ProtectedRoute({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
   
@@ -138,22 +106,11 @@ export default function App() {
             <Route path="/dashboard/profile" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/dashboard/subscription" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             
-            {/* Protected Admin Console Pages */}
-            <Route path="/admin" element={<AdminRoute><AdminLayout><AdminOverview /></AdminLayout></AdminRoute>} />
-            <Route path="/admin/creators" element={<AdminRoute><AdminLayout><AdminCreators /></AdminLayout></AdminRoute>} />
-            <Route path="/admin/withdrawals" element={<AdminRoute><AdminLayout><AdminWithdrawals /></AdminLayout></AdminRoute>} />
-            <Route path="/admin/subscriptions" element={<AdminRoute><AdminLayout><AdminSubscriptions /></AdminLayout></AdminRoute>} />
-            <Route path="/admin/transactions" element={<AdminRoute><AdminLayout><AdminTransactions /></AdminLayout></AdminRoute>} />
-            
             {/* Maketou payment return confirmation */}
             <Route path="/payment/confirm" element={<PaymentConfirm />} />
             <Route path="/subscription/confirm" element={<SubscriptionConfirm />} />
 
-            {/* Legal Pages */}
-            <Route path="/legal/terms" element={<Terms />} />
-            <Route path="/legal/sales" element={<Cgv />} />
-            <Route path="/legal/privacy" element={<Privacy />} />
-
+            
             {/* Secured Content view page */}
             <Route path="/content/:contentId" element={<ContentView />} />
 
@@ -182,12 +139,6 @@ export function LandingPage() {
   const [selectedProvider, setSelectedProvider] = useState<'wave' | 'orange' | 'mtn' | 'moov'>('wave');
   const [isPaying, setIsPaying] = useState(false);
   const [paymentStep, setPaymentStep] = useState<'details' | 'loading' | 'success'>('details');
-
-  // States for embedded interactive checkout widget
-  const [demoPaymentMethod, setDemoPaymentMethod] = useState<'wave' | 'orange' | 'carte'>('carte');
-  const [demoPaymentState, setDemoPaymentState] = useState<'idle' | 'paying' | 'success'>('idle');
-  const [demoPhone, setDemoPhone] = useState('');
-  const [demoCardNumber, setDemoCardNumber] = useState('4242 4242 4242 4242');
 
   // Exemples de contenus fictifs de démonstration
   const demoContents: Content[] = [
@@ -496,303 +447,90 @@ export function LandingPage() {
       </section>
 
       {/* Interactive Demonstration Section */}
-      <section id="live-demo" className="max-w-6xl w-full mx-auto px-4 py-16 flex flex-col items-center gap-12 select-none">
-        
-        {/* Top Circle Badge - 0% FRICTION */}
-        <div className="flex flex-col items-center relative mt-4">
-          <div className="relative w-36 h-36 rounded-full bg-light-bg-surface flex flex-col items-center justify-center shadow-sm border border-border-custom">
-            {/* SVG Arc representing 0% with subtle indicator */}
-            <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 100 100">
-              {/* Background circle */}
-              <circle 
-                cx="50" 
-                cy="50" 
-                r="44" 
-                className="stroke-gray-100 fill-none" 
-                strokeWidth="4" 
-              />
-              {/* Highlight dot or segment for 0% aesthetic */}
-              <circle 
-                cx="50" 
-                cy="50" 
-                r="44" 
-                className="stroke-accent-corail fill-none" 
-                strokeWidth="4" 
-                strokeDasharray="276"
-                strokeDashoffset="271"
-                strokeLinecap="round"
-              />
-            </svg>
-
-            {/* Lightning yellow circle at top right */}
-            <div className="absolute top-2 right-2 w-8 h-8 rounded-full bg-success-gold border-2 border-white flex items-center justify-center text-white shadow-md animate-pulse">
-              <Zap size={14} className="fill-current text-white" />
-            </div>
-
-            {/* Text inside */}
-            <div className="flex items-baseline justify-center">
-              <span className="font-display text-5xl font-semibold text-text-primary tracking-tighter">0</span>
-              <span className="text-xl font-medium text-text-secondary ml-0.5">%</span>
-            </div>
-          </div>
-          
-          {/* Pill Badge overlapping at bottom */}
-          <div className="absolute -bottom-3 px-4 py-1.5 rounded-full bg-text-primary text-white text-[10px] font-bold tracking-widest uppercase shadow-md border border-border-custom">
-            Friction
-          </div>
-        </div>
-
-        {/* Text Headers */}
-        <div className="text-center flex flex-col gap-4 mt-4">
-          <h2 className="font-display text-4xl sm:text-5xl font-medium text-text-primary tracking-tight leading-tight">
-            Vos fans achètent. Vous encaissez.
-          </h2>
-          <p className="text-base sm:text-lg text-text-secondary max-w-2xl mx-auto leading-relaxed">
-            Acceptez <strong className="text-text-primary font-semibold">Wave</strong>, <strong className="text-text-primary font-semibold">Orange Money</strong> et les <strong className="text-text-primary font-semibold">Cartes Bancaires</strong> en un clic. Vos revenus arrivent directement sur votre solde. <span className="text-accent-corail font-semibold whitespace-nowrap">Zéro barrière technique.</span>
+      <section id="live-demo" className="max-w-6xl w-full mx-auto px-4 py-16 flex flex-col gap-10">
+        <div className="text-center flex flex-col gap-3">
+          <h2 className="font-display text-3xl sm:text-4xl font-medium tracking-tight">Découvrez l'expérience de vos abonnés</h2>
+          <p className={`text-base ${styles.textSecondary} max-w-xl mx-auto`}>
+            Cliquez sur un contenu ci-dessous pour tester le processus d'achat fictif par Mobile Money et voir comment le contenu se déverrouille instantanément.
           </p>
         </div>
 
-        {/* Big White Card Layout with two columns */}
-        <div className="w-full max-w-5xl bg-light-bg-surface border border-border-custom rounded-[24px] sm:rounded-[32px] p-6 sm:p-12 lg:p-16 shadow-sm grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
+        {/* Creator profile card + Contents grid wrapper */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 mt-4">
           
-          {/* Left Column: Interactive Simulation Card */}
-          <div className="lg:col-span-5 flex justify-center">
-            <div className="w-full max-w-[360px] bg-white rounded-[20px] border border-border-custom shadow-sm p-6 relative flex flex-col gap-5 overflow-hidden transition-all duration-300 hover:shadow-md min-h-[460px] justify-between">
+          {/* Creator Profile Panel - Optimized for mobile & tablet (horizontal grid) and desktop (sticky sidebar) */}
+          <div className={`lg:col-span-1 p-6 rounded-[16px] border ${styles.surface} flex flex-col sm:grid sm:grid-cols-3 lg:flex lg:flex-col gap-6 lg:sticky lg:top-24 h-fit`}>
+            <div className="flex flex-col items-center text-center gap-3 sm:col-span-1 lg:col-span-full">
+              <div className="w-20 h-20 rounded-full bg-accent-corail/15 flex items-center justify-center border-2 border-accent-corail/30 relative">
+                <span className="font-display text-2xl font-medium text-accent-corail">MC</span>
+                <span className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-green-500 border-2 border-bg-primary" />
+              </div>
               
-              {demoPaymentState === 'idle' && (
-                <>
-                  {/* Content Info */}
-                  <div className="flex items-center gap-4">
-                    <div className="p-3.5 rounded-xl bg-accent-corail/10 text-accent-corail flex items-center justify-center shrink-0">
-                      <Download size={20} />
-                    </div>
-                    <div className="flex flex-col">
-                      <h4 className="font-semibold text-sm text-text-primary leading-tight">Guide : Booster sa Communauté</h4>
-                      <span className="text-xs text-text-secondary mt-1">Par Awa Ndiaye</span>
-                    </div>
-                  </div>
-
-                  {/* Big Price */}
-                  <div className="text-center py-2">
-                    <span className="text-3xl font-medium font-display text-text-primary tracking-tight">2 500 FCFA</span>
-                  </div>
-
-                  <div className="h-[1px] bg-border-custom w-full" />
-
-                  {/* Payment Method Selector */}
-                  <div className="flex flex-col gap-2">
-                    <span className="text-[10px] font-bold text-text-secondary tracking-widest text-center uppercase">
-                      Moyen de paiement
-                    </span>
-                    <div className="grid grid-cols-3 gap-2">
-                      <button 
-                        onClick={() => setDemoPaymentMethod('wave')}
-                        className={`py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
-                          demoPaymentMethod === 'wave' 
-                            ? 'border-[#1D9BF0] bg-[#E6F4FE] text-[#1D9BF0]' 
-                            : 'border-border-custom bg-light-bg-primary text-text-secondary hover:bg-gray-100'
-                        }`}
-                      >
-                        Wave
-                      </button>
-                      <button 
-                        onClick={() => setDemoPaymentMethod('orange')}
-                        className={`py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
-                          demoPaymentMethod === 'orange' 
-                            ? 'border-[#FF6600] bg-[#FFF2E6] text-[#FF6600]' 
-                            : 'border-border-custom bg-light-bg-primary text-text-secondary hover:bg-gray-100'
-                        }`}
-                      >
-                        Orange
-                      </button>
-                      <button 
-                        onClick={() => setDemoPaymentMethod('carte')}
-                        className={`py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
-                          demoPaymentMethod === 'carte' 
-                            ? 'border-accent-corail bg-accent-corail/10 text-accent-corail' 
-                            : 'border-border-custom bg-light-bg-primary text-text-secondary hover:bg-gray-100'
-                        }`}
-                      >
-                        Carte
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Dynamic Form Area */}
-                  <div className="flex flex-col gap-2">
-                    <span className="text-[10px] font-bold text-text-secondary tracking-widest uppercase">
-                      {demoPaymentMethod === 'carte' ? 'Numéro de carte' : 'Numéro de téléphone'}
-                    </span>
-                    
-                    <div className="w-full bg-light-bg-primary border border-border-custom rounded-xl px-4 py-3.5 flex items-center gap-3 text-sm text-text-primary focus-within:border-accent-corail focus-within:bg-white transition-all">
-                      {demoPaymentMethod === 'carte' ? (
-                        <>
-                          <CreditCard size={18} className="text-text-secondary shrink-0" />
-                          <input 
-                            type="text" 
-                            placeholder="4242 •••• •••• 4242" 
-                            value={demoCardNumber}
-                            onChange={(e) => setDemoCardNumber(e.target.value)}
-                            className="bg-transparent border-none outline-none p-0 w-full text-sm placeholder-gray-300 tracking-wide font-medium"
-                            maxLength={19}
-                          />
-                        </>
-                      ) : (
-                        <>
-                          <Smartphone size={18} className="text-text-secondary shrink-0" />
-                          <input 
-                            type="tel" 
-                            placeholder={demoPaymentMethod === 'wave' ? '+221 77 123 45 67' : '+225 07 123 456 78'} 
-                            value={demoPhone}
-                            onChange={(e) => setDemoPhone(e.target.value)}
-                            className="bg-transparent border-none outline-none p-0 w-full text-sm placeholder-gray-300 tracking-wide font-medium"
-                          />
-                        </>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Big Action Button */}
-                  <button 
-                    onClick={() => {
-                      setDemoPaymentState('paying');
-                      setTimeout(() => {
-                        setDemoPaymentState('success');
-                      }, 1800);
-                    }}
-                    className="w-full bg-accent-corail text-white hover:bg-accent-corail-hover transition-all duration-200 font-semibold rounded-xl py-3.5 text-center text-sm shadow-lg shadow-accent-corail/15 mt-2 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
-                  >
-                    Payer 2 500 FCFA
-                  </button>
-                </>
-              )}
-
-              {demoPaymentState === 'paying' && (
-                <div className="flex flex-col items-center justify-center my-auto gap-5 py-8">
-                  <div className="relative flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-100 border-t-accent-corail"></div>
-                  </div>
-                  <div className="flex flex-col items-center text-center gap-1.5 px-4 animate-pulse">
-                    <h5 className="font-semibold text-sm text-text-primary">
-                      {demoPaymentMethod === 'carte' ? 'Validation 3D Secure...' : 'Envoi de la demande de paiement...'}
-                    </h5>
-                    <p className="text-xs text-text-secondary">
-                      {demoPaymentMethod === 'carte' 
-                        ? 'Vérification en cours avec votre établissement bancaire.' 
-                        : 'Confirmez la transaction via le menu ou la notification de votre opérateur.'}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {demoPaymentState === 'success' && (
-                <div className="flex flex-col items-center justify-between h-full py-2">
-                  <div className="flex flex-col items-center text-center my-auto gap-4 px-2">
-                    {/* Pulsing check icon */}
-                    <div className="w-16 h-16 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shadow-md animate-bounce">
-                      <Check size={32} className="stroke-[3]" />
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <h4 className="text-lg font-medium font-display text-text-primary">Paiement réussi !</h4>
-                      <p className="text-xs text-text-secondary leading-relaxed">
-                        Le guide <span className="font-semibold text-text-primary">"Booster sa Communauté"</span> a été déverrouillé avec succès.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="w-full flex flex-col gap-3">
-                    <button 
-                      onClick={() => {
-                        const element = document.createElement("a");
-                        const file = new Blob(["Félicitations pour votre achat fictif sur Momo Creator !"], {type: 'text/plain'});
-                        element.href = URL.createObjectURL(file);
-                        element.download = "guide-booster-communaute-demo.txt";
-                        document.body.appendChild(element);
-                        element.click();
-                        document.body.removeChild(element);
-                      }}
-                      className="w-full bg-text-primary text-white hover:bg-text-primary/95 transition-all font-semibold rounded-xl py-3 text-center text-xs flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
-                    >
-                      <Download size={14} />
-                      Télécharger le Guide
-                    </button>
-                    
-                    <button 
-                      onClick={() => {
-                        setDemoPaymentState('idle');
-                        setDemoPhone('');
-                        setDemoCardNumber('4242 4242 4242 4242');
-                      }}
-                      className="text-xs text-text-secondary hover:text-accent-corail hover:underline transition-all text-center cursor-pointer font-medium"
-                    >
-                      Recommencer la démonstration
-                    </button>
-                  </div>
-                </div>
-              )}
-
+              <div className="flex flex-col">
+                <h3 className="font-display text-base sm:text-lg font-medium">Michella Coaching</h3>
+                <span className="text-xs text-accent-corail font-semibold">@michella_coaching</span>
+              </div>
+              
+              <p className={`text-xs ${styles.textSecondary} leading-relaxed max-w-xs mx-auto`}>
+                Aide les créateurs à structurer leur communication et à monétiser intelligemment leur audience TikTok & Instagram.
+              </p>
             </div>
-          </div>
 
-          {/* Right Column: Promotional Bullet points */}
-          <div className="lg:col-span-7 flex flex-col gap-8">
-            <h3 className="font-display text-3xl sm:text-4xl font-medium text-text-primary tracking-tight leading-tight">
-              Transformez chaque clic en encaissement direct.
-            </h3>
-            
-            <div className="flex flex-col gap-6">
-              {/* Point 1 */}
-              <div className="flex gap-4 items-start">
-                <div className="p-3.5 rounded-2xl bg-accent-corail/10 border border-border-custom shadow-[0_4px_12px_rgba(0,0,0,0.01)] text-accent-corail flex items-center justify-center shrink-0 w-12 h-12">
-                  <Smartphone size={22} />
-                </div>
-                <div className="flex flex-col">
-                  <h4 className="font-semibold text-text-primary text-base mb-1">
-                    Mobile Money Intégré
-                  </h4>
-                  <p className="text-sm text-text-secondary leading-relaxed">
-                    Proposez Wave, Orange Money, MTN ou Moov. Vos acheteurs paient directement depuis leur téléphone au Sénégal, en Côte d’Ivoire, au Togo ou au Cameroun sans friction.
-                  </p>
-                </div>
+            <div className={`pt-4 sm:pt-0 border-t sm:border-t-0 sm:border-l lg:border-l-0 lg:border-t ${styles.border} flex flex-col gap-3 text-xs sm:px-6 lg:px-0 sm:col-span-1 lg:col-span-full justify-center`}>
+              <div className="flex justify-between items-center gap-4">
+                <span className={styles.textSecondary}>Pays d'origine</span>
+                <span className="font-medium">Togo 🇹🇬</span>
               </div>
-
-              {/* Point 2 */}
-              <div className="flex gap-4 items-start">
-                <div className="p-3.5 rounded-2xl bg-accent-corail/10 border border-border-custom shadow-[0_4px_12px_rgba(0,0,0,0.01)] text-accent-corail flex items-center justify-center shrink-0 w-12 h-12">
-                  <CreditCard size={22} />
-                </div>
-                <div className="flex flex-col">
-                  <h4 className="font-semibold text-text-primary text-base mb-1">
-                    Cartes Bancaires pour la Diaspora
-                  </h4>
-                  <p className="text-sm text-text-secondary leading-relaxed">
-                    Ne ratez aucun fan international. Vos abonnés résidant en Europe ou en Amérique paient instantanément et en toute sécurité par Visa ou Mastercard.
-                  </p>
-                </div>
+              <div className="flex justify-between items-center gap-4">
+                <span className={styles.textSecondary}>Abonnés cumulés</span>
+                <span className="font-medium">120K</span>
               </div>
+              <div className="flex justify-between items-center gap-4">
+                <span className={styles.textSecondary}>Contenus vendus</span>
+                <span className="font-medium text-success-gold font-bold">1 240+</span>
+              </div>
+            </div>
 
-              {/* Point 3 */}
-              <div className="flex gap-4 items-start">
-                <div className="p-3.5 rounded-2xl bg-accent-corail/10 border border-border-custom shadow-[0_4px_12px_rgba(0,0,0,0.01)] text-accent-corail flex items-center justify-center shrink-0 w-12 h-12">
-                  <Zap size={22} />
-                </div>
-                <div className="flex flex-col">
-                  <h4 className="font-semibold text-text-primary text-base mb-1">
-                    Livraison 100% Automatisée
-                  </h4>
-                  <p className="text-sm text-text-secondary leading-relaxed">
-                    Momo Creator livre le fichier instantanément après validation du paiement. Pas d'envoi manuel fastidieux, tout s'exécute automatiquement pendant que vous dormez.
-                  </p>
-                </div>
+            <div className="flex flex-col gap-2 sm:col-span-1 lg:col-span-full sm:pl-6 lg:pl-0 justify-center">
+              <span className={`text-[10px] font-bold uppercase tracking-wider ${styles.textSecondary}`}>Réseaux</span>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className={`px-2 py-1 rounded-md ${styles.badgeBg} text-[10px] font-medium flex items-center gap-1`}>
+                  TikTok
+                </span>
+                <span className={`px-2 py-1 rounded-md ${styles.badgeBg} text-[10px] font-medium flex items-center gap-1`}>
+                  Instagram
+                </span>
               </div>
             </div>
           </div>
 
+          {/* Locked Content Grid Showcase */}
+          <div className="lg:col-span-3 flex flex-col gap-6">
+            <div className="flex items-center justify-between px-1">
+              <span className="text-xs font-semibold uppercase tracking-wider opacity-80">
+                Boutique de démonstration
+              </span>
+              <button 
+                onClick={() => setUnlockedIds([])} 
+                className="text-xs text-accent-corail hover:underline cursor-pointer font-medium"
+              >
+                Réinitialiser les déblocages
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+              {demoContents.map((content) => (
+                <LockedContentCard 
+                  key={content.id}
+                  content={content}
+                  isUnlocked={unlockedIds.includes(content.id)}
+                  onUnlock={() => handleUnlockClick(content)}
+                />
+              ))}
+            </div>
+          </div>
         </div>
       </section>
-
-      {/* Platform Impact Section */}
-      <PlatformImpact />
 
       {/* Trust & Features Section */}
       <section id="trust" className={`border-t ${styles.border} py-16 px-4 bg-opacity-30 ${isDarkMode ? 'bg-bg-surface/25' : 'bg-gray-50/25'}`}>
@@ -896,9 +634,8 @@ export function LandingPage() {
             <strong>Momo Creator</strong> © {new Date().getFullYear()} — La plateforme de monétisation préférée des créateurs africains.
           </div>
           <div className="flex items-center gap-4">
-            <Link to="/legal/terms" className="hover:underline cursor-pointer">Conditions d’utilisation</Link>
-            <Link to="/legal/sales" className="hover:underline cursor-pointer">Conditions de vente (CGV)</Link>
-            <Link to="/legal/privacy" className="hover:underline cursor-pointer">Politique de confidentialité</Link>
+            <span className="hover:underline cursor-pointer">Conditions d’utilisation</span>
+            <span className="hover:underline cursor-pointer">Politique de confidentialité</span>
           </div>
         </div>
       </footer>

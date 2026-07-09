@@ -6,7 +6,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Sparkles, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { Sparkles, Eye, EyeOff, AlertCircle, ShieldAlert } from 'lucide-react';
 import { motion } from 'motion/react';
 
 export default function Login() {
@@ -54,6 +54,31 @@ export default function Login() {
       <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-accent-corail/5 blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] rounded-full bg-success-gold/5 blur-[120px] pointer-events-none" />
 
+      {/* Demo Mode Toggle Banner */}
+      <div className="w-full max-w-md mb-6 bg-bg-surface border border-border-custom p-4 rounded-[16px] flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md">
+        <div className="flex items-center gap-2">
+          <ShieldAlert className="text-success-gold h-5 w-5 shrink-0" />
+          <div className="text-left">
+            <h4 className="text-xs font-semibold text-text-primary">Mode de fonctionnement</h4>
+            <p className="text-[10px] text-text-secondary leading-normal">
+              {isDemoMode 
+                ? 'Mode démo local activé (pas de base de données requise)' 
+                : 'Connecté en direct à votre base Supabase'}
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={() => setDemoMode(!isDemoMode)}
+          className={`px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wide uppercase transition-all duration-300 ${
+            isDemoMode 
+              ? 'bg-success-gold/20 text-success-gold border border-success-gold/30 hover:bg-success-gold/35' 
+              : 'bg-accent-corail/10 text-accent-corail border border-accent-corail/20 hover:bg-accent-corail/20'
+          }`}
+        >
+          {isDemoMode ? 'Passer en Supabase' : 'Activer Démo'}
+        </button>
+      </div>
+
       <motion.div 
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
@@ -74,9 +99,9 @@ export default function Login() {
 
         {/* Error Notification */}
         {(localError || authError) && (
-          <div className="mb-6 p-4 rounded-[12px] bg-red-50 border border-red-200 text-red-700 text-xs flex items-start gap-2.5">
-            <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-red-600" />
-            <p className="leading-relaxed font-medium">{localError || authError}</p>
+          <div className="mb-6 p-4 rounded-[12px] bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex items-start gap-2.5">
+            <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+            <p className="leading-relaxed">{localError || authError}</p>
           </div>
         )}
 
