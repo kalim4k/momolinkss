@@ -184,15 +184,44 @@ app.post('/api/payment/create-cart', async (req, res) => {
 
     // d. Call Maketou Checkout or Simulate if not configured
     if (isMaketouConfigured) {
-      const appUrl = (process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || `http://localhost:${PORT}`).replace(/\/$/, '');
+      let appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL;
+      if (!appUrl || appUrl === 'MY_APP_URL' || appUrl.trim() === '') {
+        if (process.env.VERCEL_URL) {
+          appUrl = `https://${process.env.VERCEL_URL}`;
+        } else {
+          const host = req.get('host');
+          const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http';
+          if (host) {
+            appUrl = `${protocol}://${host}`;
+          } else {
+            appUrl = `http://localhost:${PORT}`;
+          }
+        }
+      }
+      appUrl = appUrl.replace(/\/$/, '');
       const redirectURL = `${appUrl}/payment/confirm?cartId={cartId}&purchaseId=${purchaseId}`;
+
+      // Clean phone number format for Maketou
+      let phoneToUse: string | undefined = undefined;
+      if (buyerPhone && typeof buyerPhone === 'string') {
+        const cleanedPhone = buyerPhone.replace(/[\s\-\(\)]/g, '');
+        // Validate strict international format starting with + and digits (e.g. +221771234567)
+        if (/^\+\d{8,15}$/.test(cleanedPhone)) {
+          phoneToUse = cleanedPhone;
+        } else if (/^\d{8,15}$/.test(cleanedPhone)) {
+          phoneToUse = '+' + cleanedPhone;
+        } else {
+          // If phone is invalid format, drop it completely since the field is optional
+          phoneToUse = undefined;
+        }
+      }
 
       const requestBody = {
         productDocumentId: process.env.MAKETOU_PRODUCT_ID,
         email: buyerEmail,
         firstName: buyerFirstName,
         lastName: buyerLastName,
-        phone: buyerPhone || undefined,
+        phone: phoneToUse,
         customerPrice: price_amount,
         redirectURL: redirectURL,
         meta: { contentId, purchaseId, buyerEmail }
@@ -280,7 +309,21 @@ app.post('/api/payment/create-cart', async (req, res) => {
         type: 'purchase'
       });
 
-      const appUrl = (process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || `http://localhost:${PORT}`).replace(/\/$/, '');
+      let appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL;
+      if (!appUrl || appUrl === 'MY_APP_URL' || appUrl.trim() === '') {
+        if (process.env.VERCEL_URL) {
+          appUrl = `https://${process.env.VERCEL_URL}`;
+        } else {
+          const host = req.get('host');
+          const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http';
+          if (host) {
+            appUrl = `${protocol}://${host}`;
+          } else {
+            appUrl = `http://localhost:${PORT}`;
+          }
+        }
+      }
+      appUrl = appUrl.replace(/\/$/, '');
       const simulatedRedirectUrl = `${appUrl}/payment/confirm?cartId=${mockCartId}&purchaseId=${purchaseId}`;
 
       return res.json({ redirectUrl: simulatedRedirectUrl });
@@ -735,15 +778,32 @@ app.post('/api/subscription/create-cart', async (req, res) => {
 
     const hasMaketou = !!process.env.MAKETOU_API_KEY;
 
-    let phoneToUse = (buyerPhone || '').replace(/[\s\-\(\)]/g, '');
-    if (!phoneToUse || phoneToUse === '') {
-      phoneToUse = '+221771234567';
-    } else if (!phoneToUse.startsWith('+')) {
-      phoneToUse = '+' + phoneToUse;
+    let phoneToUse: string | undefined = undefined;
+    if (buyerPhone && typeof buyerPhone === 'string') {
+      const cleanedPhone = buyerPhone.replace(/[\s\-\(\)]/g, '');
+      if (/^\+\d{8,15}$/.test(cleanedPhone)) {
+        phoneToUse = cleanedPhone;
+      } else if (/^\d{8,15}$/.test(cleanedPhone)) {
+        phoneToUse = '+' + cleanedPhone;
+      }
     }
 
     if (hasMaketou && productDocumentId) {
-      const appUrl = (process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || `http://localhost:${PORT}`).replace(/\/$/, '');
+      let appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL;
+      if (!appUrl || appUrl === 'MY_APP_URL' || appUrl.trim() === '') {
+        if (process.env.VERCEL_URL) {
+          appUrl = `https://${process.env.VERCEL_URL}`;
+        } else {
+          const host = req.get('host');
+          const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http';
+          if (host) {
+            appUrl = `${protocol}://${host}`;
+          } else {
+            appUrl = `http://localhost:${PORT}`;
+          }
+        }
+      }
+      appUrl = appUrl.replace(/\/$/, '');
       const redirectURL = `${appUrl}/subscription/confirm?cartId={cartId}&creatorId=${creatorId}`;
 
       const body = {
@@ -820,7 +880,21 @@ app.post('/api/subscription/create-cart', async (req, res) => {
         type: 'subscription'
       });
 
-      const appUrl = (process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || `http://localhost:${PORT}`).replace(/\/$/, '');
+      let appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL;
+      if (!appUrl || appUrl === 'MY_APP_URL' || appUrl.trim() === '') {
+        if (process.env.VERCEL_URL) {
+          appUrl = `https://${process.env.VERCEL_URL}`;
+        } else {
+          const host = req.get('host');
+          const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http';
+          if (host) {
+            appUrl = `${protocol}://${host}`;
+          } else {
+            appUrl = `http://localhost:${PORT}`;
+          }
+        }
+      }
+      appUrl = appUrl.replace(/\/$/, '');
       const simulatedRedirectUrl = `${appUrl}/subscription/confirm?cartId=${mockCartId}&creatorId=${creatorId}`;
 
       return res.json({ redirectUrl: simulatedRedirectUrl });
